@@ -1,6 +1,6 @@
 # Single-cell sequencing of the human midbrain reveals glial activation and a neuronal state specific to Parkinson's disease
 
-Data analysis workflow to reproduce the manuscript's findings Single-cell sequencing of the human midbrain reveals glial activation and a neuronal state-specific to Parkinson's disease. Raw-data is publically available in the Gene Expression Omnibus with the accession number [GSE157783](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE157783). 
+Data analysis workflow to reproduce the findings of the manuscript:  "Single-cell sequencing of the human midbrain reveals glial activation and a neuronal state-specific to Parkinson's disease". Raw-data is publically available in the Gene Expression Omnibus with the accession number [GSE157783](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE157783). 
 
 ## General data analysis workflow
 
