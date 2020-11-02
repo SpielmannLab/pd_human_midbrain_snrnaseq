@@ -214,26 +214,37 @@ mcafile=${jobname}"_seurat3_integrated_npcs_"${npcs}"_nvgs_"${nhvg}"_"${method}"
 assay="RNA"
 ncor=15
 res=0.01
+mincells=100
+min_cell_prop=0.1
+min_logfc=0
 
-Rscript ./src/get_mkr_genes_seurat3.R --jobname=${jobname} --mcafile=${mcafile} --assay=${assay} --mincells=100 --min_cell_prop=0.1 --min_logfc=0.1 --resolution=${res} --specie=${sp} --infolder=${infolder} --outfolder=${outfolder} --ncores=${ncor}
+Rscript ./src/get_mkr_genes_seurat3.R --jobname=${jobname} --mcafile=${mcafile} --assay=${assay} --mincells=${mincells} --min_cell_prop=${min_cell_prop} --min_logfc=${min_logfc} --resolution=${res} --specie=${sp} --infolder=${infolder} --outfolder=${outfolder} --ncores=${ncor}
 
 # --------------------------------------------------
 # Differential cellular composition (two-level variables)
 # --------------------------------------------------
 
+mcafile=${jobname}"_seurat3_integrated_npcs_"${npcs}"_nvgs_"${nhvg}"_"${method}"_"${norm_method}"_seurat3_integrated_norm.rds"
 groupvar="condition"
+samplevar="sample"
+res="cell_ontology"
 
-Rscript ./src/diff_cellcomp.R --jobname=${jobname} --groupvar=${groupvar} --resolution=${res} --infolder=${infolder} --outfolder=${outfolder}
+Rscript ./src/diff_cellcomp.R --jobname=${jobname} --mcafile=${mcafile} --samplevar=${samplevar} --groupvar=${groupvar} --resolution=${res} --infolder=${infolder} --outfolder=${outfolder}
 
 # --------------------------------------------------
 # Differential gene expression (two-level variables)
 # --------------------------------------------------
 
-Rscript /project/zvi/cprada/src_monocle3/diff_exp.R --jobname=${jobname} --groupvar=condition --samplevar=sample --resolution=${res} --specie=${sp} --infolder=${infolder} --outfolder=${outfolder}
+level2test="IPD"
+distribution="quasipoisson"
+ncor=15
+
+Rscript ./src/diff_exp_seurat2monocle.R --jobname=${jobname} --mcafile=${mcafile} --groupvar=${groupvar} --level2test=${level2test} --samplevar=${samplevar} --resolution=${res} --distribution=${distribution} --det_thr=${min_cell_prop} --ncores=${ncor} --specie=${sp} --infolder=${infolder} --outfolder=${outfolder}
 
 # --------------------------------------------------
 # Sub-clustering (split dataset into the comprising cell-types
 # --------------------------------------------------
+
 
 
 # --------------------------------------------------

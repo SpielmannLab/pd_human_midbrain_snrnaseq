@@ -4,18 +4,22 @@
 
 " Estimate expression difference given a colData variable and a clustering-resolution or a cell-ontology (Seurat3 objects only)
 
-Usage: diff_exp_seurat2monocle.R --jobname=<value> [--mcafile=<file>] --groupvar=<value> --samplevar=<value> --resolution=<value> --specie=<value> --infolder=<folder> --outfolder=<folder>
+Usage: diff_exp_seurat2monocle.R --jobname=<value> [--mcafile=<file>] --groupvar=<value> --level2test=<string> [--samplevar=<value>] --resolution=<value> [--distribution=<string>] [--det_thr=<value>] [--ncores=<value>] --specie=<value> --infolder=<folder> --outfolder=<folder>
 
 Options:
-  -h --help            Show this screen.
-  --version            00.99.01
-  --jobname=<file>     Descriptive name for your experiment.
-  --mcafile=<file>     rds file with mca (Seurat3) object.
-  --groupvar=<value>   Variable to do comparison.
-  --samplevar=<value>  Sample variable. Ref for pseudo-bulk.
-  --resolution=<value> Clustering resolution.
-  --infolder=<file>    Path to the single_cell_data .rds files.  
-  --outfolder=<file>   Path to results folder.
+  -h --help              Show this screen.
+  --version              00.99.01
+  --jobname=<file>       Descriptive name for your experiment.
+  --mcafile=<file>       rds file with mca (Seurat3) object.
+  --groupvar=<value>     Variable to do comparison.
+  --level2test=<string>  groupvar level to calculate the differential gene expression effect-size.
+  --samplevar=<value>    Sample variable. Ref for pseudo-bulk.
+  --resolution=<value>   Clustering resolution.
+  --distribution=<value> Distribution to use for diff. exp. e.g. quasipoisson, negbinomial, poisson, binomial, gaussian, zipoisson, or zinegbinomial.
+  --det_thr=<value>      Minimum percentage of expressing cells of a given gene to be considered.
+  --ncores=<value>       Number of cores to be used.  
+  --infolder=<file>      Path to the single_cell_data .rds files.  
+  --outfolder=<file>     Path to results folder.
 
 "-> doc
 
@@ -43,16 +47,8 @@ if (!require("BiocManager", character.only = TRUE)) {
 	}
 }
 
-
-
-
-suppressMessages(library(ggfortify))
-suppressMessages(library(topconfects))
-suppressMessages(library(plotly))
-suppressMessages(library(edgeR))
-
 # Functions
-seurat2monocleDE <- function(mca, jobname) {
+seurat2monocleDE <- function(mca, jobname, groupvar, level2test, det_thr, distribution, ncores) {
 	
 	## Monocle diff. exp. framework
 	cds <- new_cell_data_set(expression_data = mca@assays$RNA@counts,
@@ -71,8 +67,7 @@ seurat2monocleDE <- function(mca, jobname) {
 
 	# Sub-setting genes that are detected in at least det_thr % of the cells of at least one var level
 	print(table(mca@meta.data[[groupvar]]))
-	det_thr <- 0.2
-
+	
 	genes <- lapply(unique(mca@meta.data[[groupvar]]), function(condition) {
 	
 		       scds <- cds[, which(mca@meta.data[[groupvar]] == condition)]
@@ -88,9 +83,9 @@ seurat2monocleDE <- function(mca, jobname) {
 	sub_cds <- cds[igenes, ]
 
 	cgene_fits <- fit_models(sub_cds,
-				 model_formula_str = "~condition",
-				 expression_family = "quasipoisson",
-				 cores = 10)
+				 model_formula_str = paste0("~", groupvar),
+				 expression_family = distribution,
+				 cores = ncores)
 
 	fit_coefs <- coefficient_table(cgene_fits)
 
@@ -99,7 +94,7 @@ seurat2monocleDE <- function(mca, jobname) {
 	unique(fit_coefs$term)
 
 	coef_res <- fit_coefs %>% 
-	       filter(term == "conditionIPD") %>% 
+	       filter(term == paste0(groupvar, level2test)) %>% 
 	       filter (q_value < 0.05) %>%
 	       select(gene, gene_short_name, term, q_value, estimate) %>% 
 	       arrange(q_value) %>%
@@ -123,14 +118,19 @@ seurat2monocleDE <- function(mca, jobname) {
 
 }
 
-# Input parameters
+# --- Input parameters
+
 jobname <- arguments$jobname
 groupvar <- arguments$groupvar
 samplevar <- arguments$samplevar
 res <- arguments$resolution
+distribution <- arguments$distribution
 specie <- arguments$specie
 inputfolder <- arguments$infolder
 outputfolder <- arguments$outfolder
+det_thr <- arguments$det_thr
+ncores <- arguments$ncores
+level2test <- arguments$level2test
 
 # --- Read cell_data_set object with merged samples
 
@@ -198,18 +198,31 @@ print(dim(raw_eset))
 
 row_df <- mca@assays$RNA@meta.features
 row_df[["gene"]] <- rownames(row_df)
-dim(row_df)
+print(dim(row_df))
 row_df <- merge(row_df, refbiomart, by.x ="gene", by.y = "Gene stable ID", all.x = TRUE) 
 row_df <- filter(row_df, !duplicated(`gene`))
-dim(row_df)
+print(dim(row_df))
 colnames(row_df)[7] <- "gene_short_name"
 rownames(row_df) <- row_df[["gene"]]
-head(row_df)
+print(head(row_df, 2))
 
+
+message("Single-cell gene differential expression modelling.")
 lapply(unique(mca@meta.data[[ident_col]]), function(cell) {
 
-	       cells <- rownames(mca@meta.data)[which(mca@meta.data[[ident_col]] == cell)]
-	       sub_mca <- mca[, cells]
-	       seurat2monocleDE(sub_mca, paste0(gsub("\\+| ", "_", cell), '_', "DEG"))
+	       print(cell)
 
-	  })
+	       cells <- rownames(mca@meta.data)[which(mca@meta.data[[ident_col]] == cell)]
+	       
+	       sub_mca <- mca[, cells]
+	       
+	       seurat2monocleDE(mca=sub_mca, 
+	       			jobaname=paste0(gsub("\\+| ", "_", cell), '_', "DEG"),
+	       			groupvar=groupvar,
+	       			leveltest=level2test,
+	       			det_thr=det_thr,
+	       			distribution=distribution,
+	       			ncores=ncores)
+})
+
+message("Single-cell gene differential expression modelling is done *.*")
