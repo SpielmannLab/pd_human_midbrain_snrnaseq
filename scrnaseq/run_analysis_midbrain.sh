@@ -242,15 +242,12 @@ ncor=15
 Rscript ./src/diff_exp_seurat2monocle.R --jobname=${jobname} --mcafile=${mcafile} --groupvar=${groupvar} --level2test=${level2test} --samplevar=${samplevar} --resolution=${res} --distribution=${distribution} --det_thr=${min_cell_prop} --ncores=${ncor} --specie=${sp} --infolder=${infolder} --outfolder=${outfolder}
 
 # --------------------------------------------------
-# Sub-clustering (split dataset into the comprising cell-types
+# Trajectory inference for the main cell-types
 # --------------------------------------------------
 
+alignvar="sample"
+nhvg=500
 
-
-# --------------------------------------------------
-# Trajectory inference
-# --------------------------------------------------
-
-
+Rscript ./src/subtrajectory_seurat2monocle.R --jobname=${jobname} --mcafile=${mcafile} --groupvar=${groupvar} --samplevar=${samplevar} --alignvar=${alignvar} --resolution=${res} --nhvg=${nhvg} --npcs=${npcs} --specie=${sp} --ncores=${ncor} --infolder=${infolder} --outfolder=${outfolder}
 
 # 

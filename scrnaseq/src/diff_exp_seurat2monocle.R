@@ -123,7 +123,7 @@ seurat2monocleDE <- function(mca, jobname, groupvar, level2test, det_thr, distri
 jobname <- arguments$jobname
 groupvar <- arguments$groupvar
 samplevar <- arguments$samplevar
-res <- arguments$resolution
+resolution <- arguments$resolution
 distribution <- arguments$distribution
 specie <- arguments$specie
 inputfolder <- arguments$infolder
