@@ -16,8 +16,8 @@ UMI count matrix and cell metadata are available as supplementary files in the G
 
 `./scrnaseq/run_analysis_midbrain.sh`
 
-### Genetic enrichment
-
-
-
 ### Image analysis
+
+We used fluorescence microscopy to validate the single-cell sequencing results. We analyzed microscopy images of two whole-midbrain ventral sections. The tissues were stained for neuronal, dopaminergic, and glial cells (oligodendrocytes, astrocytes, and microglia) markers, as well as for the Cadps2 protein. 
+
+### Genetic enrichment
