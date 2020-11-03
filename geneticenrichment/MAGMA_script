@@ -1,0 +1,9 @@
+
+##1st step in MAGMA analysis: Annotation (pre-processing step in which SNP are mapped to genes)
+magma --annotate window=35,10 --snp-loc LOC_SNPs --gene-loc gene.loc --out output
+
+##2nd step in MAGMA analysis: Gene analysis on SNP p-value data
+magma --bfile g1000_eur --gene-annot output.genes.annot --pval nallsEtAl2019_excluding23andMe_allVariants.tab ncol=N_all --out output
+
+##3rd step in MAGMA analysis: Gene-set analysis
+magma --gene-results output.genes.raw --set-annot gene_set_file --out output
